@@ -9,8 +9,8 @@
 //how do I want this?
 //the graph as a thing kept in the class?
 //graph in the g_node as pointers? need a flexible pointer declaration though...
-#define N 3
-#define ELEMENTS 10
+#define N 10
+#define ELEMENTS 1000
 #define x_max 6
 #define x_min 0
 #define y_max 6
@@ -28,17 +28,16 @@ struct vox
 struct g
 {
 	vox data;
+	float head_dist[N];
 	g* head[N];
 	struct g_node *parent;
-};
-struct point_hold
-{
-	float small;
-	g* spot;
 
-	point_hold() : small(FLT_MAX), spot(NULL)
-	{}
-	~point_hold()
+	g()
+	{
+		for (int i = 0; i <N; i++)
+		head_dist[i] = FLT_MAX; //head[i](NULL);
+	}
+	~g()
 	{
 
 	}

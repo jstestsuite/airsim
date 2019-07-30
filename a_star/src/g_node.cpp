@@ -49,20 +49,23 @@
 void printGraph(struct g* graph)
 {
 	int i;
-	printf("start x = %f \n", graph->data.x);
-	for (i = 0; i < N; i++)
+	for(int j = 0; j< ELEMENTS; j++)
 	{
-
-		// print current vertex and all ts neighbors
-		struct g* ptr = graph->head[i];
-		//while (ptr != NULL)
+		printf("start x = %f \n", (graph+j)->data.x);
+		for (i = 0; i < N; i++)
 		{
-			printf("(%d -> %f)\t", i, ptr->data.x );//,ptr->data.y, ptr->data.z);
-			//ptr = ptr->next;
-		}
 
-		printf("\n");
+			// print current vertex and all ts neighbors
+			struct g* ptr = (graph+j)->head[i];
+			//while (ptr != NULL)
+			{
+				printf("(%d -> %f)\t", i, ptr->data.x );//,ptr->data.y, ptr->data.z);
+				//ptr = ptr->next;
+			}
+
+			printf("\n");
 	}
+}
 }
 vox rand_vox()
 {
@@ -143,48 +146,37 @@ double calc_d(vox in, vox dest)
 
 void g_explore(g* vin)
 {
-	//unsigned i;
 	vox src;
-	for(int i = 0; i <ELEMENTS; i++) 
+	for(int i = 0; i < ELEMENTS; i++) 
 	{	
 		vox data = (vin+i)->data;
-		point_hold small[N]; //= {10, NULL};
-		for(int j = i+1; j<ELEMENTS; j++)
+		//point_hold small[N];
+		for(int j = 0; j<ELEMENTS; j++)
 		{
-			double dist = calc_d(data, (vin+j)->data);
-		//	printf("dist = %f \n", small[1].small);
-			for (int l = 0; l<N; l++)
+			if( i !=j)
 			{
-			//	printf("compared = %f \n", small[l].small);
-			if(dist < small[l].small)
-			{	
-				small[l].small = dist;
-				float big = small[l].small;
-				int count = l;
-				//printf("big = %d \n", big);
-				for (int z = l; z<N;z++)
+				double dist = calc_d(data, (vin+j)->data);
+				for (int l = 0; l<N; l++)
 				{
-					if(big > small[z].small)
-					{
-						count = z;
-						
-						big = small[z].small;
-						//printf("small  = %f \n", small[z].small);
+					if(dist < (vin+i)->head_dist[l])
+					{	
+						float big = dist;
+						int count = l;
+						for (int z = l; z<N;z++)
+						{
+							if(big < (vin+i)->head_dist[z])
+							{
+								count = z;								
+								big = (vin+i)->head_dist[z];
+							}
+						}
+						(vin+i)->head_dist[count] = dist;
+						(vin+i)->head[count]  = (vin+j);
+					    break;
 					}
 				}
-				small[count].small = big;
-				small[count].spot = (vin+j);
-				//printf("set = %f \n \n \n", big);
-
-			    break;
 			}
 		}
-	}
-	
-		for (int k = 0; k < N; k++)
-		{
-			(vin+i)->head[k] = small[k].spot;
-		}	
 	}
 }
 
@@ -213,17 +205,19 @@ r = r_g;
  for (int i = 0; i<ELEMENTS; i++)
  {
  	r_g[i].data= rand_vox();
- 	printf("x = %f \n",r_g[i].data.x);
+ 	//printf("x = %f \n",r_g[i].data.x);
+ 	//printf("som = %f \n", r_g[i].head_dist[0]);
+ 	//printf("som = %f \n", r_g[i].head_dist[1]);
+ 	//printf("som = %f \n", r_g[i].head_dist[0]);
 
  }
 
 			//{
 g_explore(r);
-g* t;
-t = r->head[1];
+;
 //printf("g = %f",(r+1)->data.x);
-printGraph(r);
-//printf("%d \n", r_g);
+//printGraph(r);
+printf("done \n");
 //vox one = rand_vox();
 //printf ("%f %f %f \n", one.x, one.y, one.z);
 	// construct graph from given edges
