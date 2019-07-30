@@ -49,8 +49,10 @@
 void printGraph(struct g* graph)
 {
 	int i;
+	printf("start x = %f \n", graph->data.x);
 	for (i = 0; i < N; i++)
 	{
+
 		// print current vertex and all ts neighbors
 		struct g* ptr = graph->head[i];
 		//while (ptr != NULL)
@@ -66,8 +68,8 @@ vox rand_vox()
 {
 	vox new_vox;
 	new_vox.x = x_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(x_max-x_min)));
-	new_vox.y =  y_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(y_max-y_min)));
-	new_vox.z = z_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(z_max-z_min)));
+	new_vox.y = 0;// y_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(y_max-y_min)));
+	new_vox.z = 0;//z_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(z_max-z_min)));
 	return new_vox;
 
 }
@@ -96,7 +98,7 @@ double calc_d(vox in, vox dest)
   return (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))));
 }
 
-g* g_explore(g* vin[])
+/*g* g_explore(g* vin[]) //uses vectors
 {
 	unsigned i;
 	vox src;
@@ -137,8 +139,54 @@ g* g_explore(g* vin[])
 	struct g* graph = (struct g*)malloc(sizeof(struct g));
 	return graph;
 }
+*/
 
+void g_explore(g* vin)
+{
+	//unsigned i;
+	vox src;
+	for(int i = 0; i <ELEMENTS; i++) 
+	{	
+		vox data = (vin+i)->data;
+		point_hold small[N]; //= {10, NULL};
+		for(int j = i+1; j<ELEMENTS; j++)
+		{
+			double dist = calc_d(data, (vin+j)->data);
+		//	printf("dist = %f \n", small[1].small);
+			for (int l = 0; l<N; l++)
+			{
+			//	printf("compared = %f \n", small[l].small);
+			if(dist < small[l].small)
+			{	
+				small[l].small = dist;
+				float big = small[l].small;
+				int count = l;
+				//printf("big = %d \n", big);
+				for (int z = l; z<N;z++)
+				{
+					if(big > small[z].small)
+					{
+						count = z;
+						
+						big = small[z].small;
+						//printf("small  = %f \n", small[z].small);
+					}
+				}
+				small[count].small = big;
+				small[count].spot = (vin+j);
+				//printf("set = %f \n \n \n", big);
 
+			    break;
+			}
+		}
+	}
+	
+		for (int k = 0; k < N; k++)
+		{
+			(vin+i)->head[k] = small[k].spot;
+		}	
+	}
+}
 
 int main(int argc, char **argv)
 {
@@ -158,18 +206,24 @@ int main(int argc, char **argv)
 	// calculate number of edges
 //int n = sizeof(edges)/sizeof(edges[0]);
 
-g *r_g[ELEMENTS];
+g r_g[ELEMENTS];
+g *r;
+r = r_g;
 
  for (int i = 0; i<ELEMENTS; i++)
  {
- 	r_g[i]->data= rand_vox();
- 	//g_declare = g_declare+1;
- 	//g_declare->data = { 0, 0,0 };
+ 	r_g[i].data= rand_vox();
+ 	printf("x = %f \n",r_g[i].data.x);
+
  }
 
 			//{
-g_explore(r_g);
-
+g_explore(r);
+g* t;
+t = r->head[1];
+//printf("g = %f",(r+1)->data.x);
+printGraph(r);
+//printf("%d \n", r_g);
 //vox one = rand_vox();
 //printf ("%f %f %f \n", one.x, one.y, one.z);
 	// construct graph from given edges

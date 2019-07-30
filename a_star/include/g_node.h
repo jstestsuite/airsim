@@ -36,8 +36,8 @@ struct point_hold
 	float small;
 	g* spot;
 
-	//point_hold() : small(FLT_MAX), spot(NULL)
-	//{}
+	point_hold() : small(FLT_MAX), spot(NULL)
+	{}
 	~point_hold()
 	{
 
@@ -70,7 +70,7 @@ public:
 	struct g* create_g(struct edge edges[], int n);	
 	void printGraph(struct g* graph);
 	void find_graph(std::vector<g_node> nodes);
-	g* g_explore(g*  vin[]);
+	void g_explore(g*  vin);
  double calc_d(vox in, vox dest);
 	~graph();
 private:
