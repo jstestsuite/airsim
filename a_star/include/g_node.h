@@ -35,10 +35,15 @@ struct g
 	g()
 	{
 		for (int i = 0; i <N; i++)
+		{
 		head_dist[i] = FLT_MAX; //head[i](NULL);
+		head[i] = NULL;
+		}
 	}
 	~g()
 	{
+		for(int i = 0; i<N; i++)
+			delete head[i];
 
 	}
 };
