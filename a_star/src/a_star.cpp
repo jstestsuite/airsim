@@ -1,9 +1,11 @@
 #include <a_star.h>
+#include <g_node.h>
 #include <stack> 
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
-
+#include <ctime>
+#include <algorithm>
 
 bool isValid(vox in)
 {
@@ -15,10 +17,87 @@ bool isValid(vox in)
   return true;
 }
 
-
-bool isDestination(vox in, vox dest)
+voxf rand_vox()
 {
-  if (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))) <= 0.1)
+  voxf new_vox;
+//srand (static_cast <unsigned> (time(0)));
+  new_vox.x = x_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(x_max-x_min)));
+  new_vox.y =  y_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(y_max-y_min)));
+  new_vox.z = z_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(z_max-z_min)));
+  return new_vox;
+
+}
+
+
+void printGraph(struct g_node* graph)
+{
+  int i;
+  for(int j = 0; j< 1; j++)
+  {
+    printf("start x = %f \n", (graph+j)->data.x);
+    for (i = 0; i < N; i++)
+    {
+
+      // print current vertex and all ts neighbors
+      struct g_node* ptr = (graph+j)->head[i];
+      //while (ptr != NULL)
+      {
+        printf("(%d -> %f)\t", i, ptr->data.x );//,ptr->data.y, ptr->data.z);
+        //ptr = ptr->next;
+      }
+
+      printf("\n");
+    }
+}
+}
+
+
+
+double calc_d(voxf in, voxf dest)
+{
+  return (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))));
+}
+
+
+
+void g_explore(g_node* vin)
+{
+  voxf src;
+  for(int i = 0; i < ELEMENTS; i++) 
+  { 
+    voxf data = (vin+i)->data;
+    for(int j = 0; j<ELEMENTS; j++)
+    {
+      if( i !=j)
+      {
+        double dist = calc_d(data, (vin+j)->data);
+        for (int l = 0; l<N; l++)
+        {
+          if(dist < (vin+i)->head_dist[l])
+          { 
+            float big = dist;
+            int count = l;
+            for (int z = l; z<N;z++)
+            {
+              if(big < (vin+i)->head_dist[z])
+              {
+                count = z;                
+                big = (vin+i)->head_dist[z];
+              }
+            }
+            (vin+i)->head_dist[count] = dist;
+            (vin+i)->head[count]  = (vin+j);
+              break;
+          }
+        }
+      }
+    }
+  }
+}
+
+bool isDestination(voxf in, voxf dest)
+{
+  if (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))) <= 0.5)
   {
     return true;
   }
@@ -28,141 +107,89 @@ bool isDestination(vox in, vox dest)
   }
 }
 
-double calculateH(vox in, vox dest)
+double calculateH(voxf in, voxf dest)
 {
   return (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))));
 }
 
- std::vector<a_node> makePath(a_node map[10][10][10], vox dest) 
+
+
+std::vector<g_node*> makePath(g_node &start, g_node &dest) 
 {
-      //  try 
-       // {
-         //   cout << "Found a path" << endl;
-            int x = dest.x;
-            int y = dest.y;
-            int z = dest.z;
-            std::stack<a_node> path;
-            std::vector<a_node> usablePath;
 
-            while (!isDestination(map[x][y][z].parent, {x,y,z}))
-            {
-                path.push(map[x][y][z]);
-                int tempX = map[x][y][z].parent.x;
-                int tempY = map[x][y][z].parent.y;
-                int tempZ = map[x][y][z].parent.z;
-                x = tempX;
-                y = tempY;
-                z = tempZ;
-                
+    g_node *place;
+    place = &dest;
 
-            }
-            path.push(map[x][y][z]);
+    std::stack<g_node*> path;
+    std::vector<g_node*> usablePath;
 
-            while (!path.empty())
-            {
-                a_node top = path.top();
-                path.pop();
-                usablePath.emplace_back(top);
-            }
-            return usablePath;
-       // }
-       // catch(const exception& e)
-       // {
-        //  printf(%s, e.what());
-      //  }
+    while (place->parent->id != start.id)
+    {
+        path.push(place->parent);
+        place = place->parent;          
+    }
+
+    path.push(place->parent);
+
+    while (!path.empty())
+    {
+        g_node *top = path.top();
+        path.pop();
+        usablePath.emplace_back(top);
+    }
+
+    return usablePath;
+
 }
 
-std::vector<a_node> astar_calc(vox start, vox dest)
+
+std::vector<g_node*> astar_calc( g_node &start, g_node &dest)
 {
-//won't work long term.  I need to use doubles for location, so I can
-  //use a doubley linked list as my node.  and just have all the connections no locations.
-  printf("started");
-  bool closedList[10][10][10];
-  a_node map[10][10][10];
-  for (int i = 0; i <10; i++)
-  {
-    for  (int j = 0; j <10; j++)
-    {
-      for  (int k = 0; k <10; k++)
-      {
-        map[i][j][k].here.x = i;
-        map[i][j][k].here.y = j;
-        map[i][j][k].here.z = k;
-        map[i][j][k].parent ={-1,-1,-1};
-        map[i][j][k].f = FLT_MAX;
-        map[i][j][k].g = FLT_MAX;
-        map[i][j][k].h = FLT_MAX;
-        
-        closedList[i][j][k] = false;
-      }
-    }
-  }
-  //Starting location initialization
-  map[start.x][start.y][start.z].f = calculateH(start, dest); 
-  map[start.x][start.y][start.z].g = 0.0;
-  map[start.x][start.y][start.z].h = calculateH(start, dest);
-  map[start.x][start.y][start.z].parent = start;
- // map[start.x][start.y][start.z].f = 0.0;
+  start.h = calculateH(start.data, dest.data);
 
-  std::vector<a_node> openList;
-  openList.emplace_back(map[start.x][start.y][start.z]);
-  //HERE I USE size of 1000 instead of actual size
-
-  bool destinationFound = false;
+  bool closedList[ELEMENTS]= {false};
+  std::vector<g_node*> openList;
+  openList.emplace_back(&start);
 
   while(!openList.empty())
   {
-    a_node node = *openList.begin();
+    g_node *node = *openList.begin();
     openList.erase(openList.begin());
-    int x = node.here.x;
-    int y = node.here.y;
-    int z = node.here.z;
-    closedList[x][y][z] = true;
+    closedList[node->id] = true;
 
-    for (int nx = -1; nx <=1; nx++)
+    for (int n = 0; n <N; n++)
     {
-      for (int ny = -1; ny <=1; ny++)
+      double gNew, hNew, fNew;
+      g_node *new_node;
+      new_node = node->head[n];
+      if (isDestination(new_node->data, dest.data))
       {
-        for (int nz = -1; nz <=1; nz++)
+       printf("found end \n");
+       dest.parent =node;
+       return makePath(start, dest);
+      }
+      if(closedList[new_node->id] == false)
+      {
+       closedList[new_node->id] = true;
+       gNew = node->g + calculateH(node->data,new_node->data);
+       hNew = calculateH(new_node->data, dest.data);
+       fNew = gNew + hNew;
+       //  Check if this path is better than the one already present
+        if (new_node->f == FLT_MAX || new_node->f > fNew)
         {
-          double gNew, hNew, fNew;
-          if (isValid({x + nx, y + ny, z+nz})) 
-          {
-            if (isDestination({x + nx, y + ny, z+nz}, dest))
-            {
-              //Destination found - make path
-              map[x + nx][y + ny][z+nz].parent.x = x;
-              map[x + nx][y + ny][z+nz].parent.y = y;
-              map[x + nx][y + ny][z+nz].parent.z = z;
-              destinationFound = true;
-              printf("found end \n");
-              return makePath(map, dest);
-              //return map;
-            }
-            else if (closedList[x + nx][y + ny][z+nz] == false)
-            {
-              gNew = node.g + calculateH({x,y,z},{x + nx, y + ny, z+nz});
-              hNew = calculateH({x + nx, y + ny, z+nz}, dest);
-              fNew = gNew + hNew;
-              // Check if this path is better than the one already present
-              if (map[x + nx][y + ny][z+nz].f == FLT_MAX ||
-              map[x + nx][y + ny][z+nz].f > fNew)
-              {
-                // Update the details of this neighbour node
-                map[x + nx][y + ny][z+nz].f = fNew;
-                map[x + nx][y + ny][z+nz].g = gNew;
-                map[x + nx][y + ny][z+nz].h = hNew;
-                map[x + nx][y + ny][z+nz].parent.x = x;
-                map[x + nx][y + ny][z+nz].parent.y = y;
-                map[x + nx][y + ny][z+nz].parent.z = z;
-                openList.emplace_back(map[x + nx][y + ny][z+nz]);
-              }
-            }
-          }
+        //set new nodes values and add to open list
+         new_node->f = fNew;
+         new_node->g = gNew;
+         new_node->h = hNew;
+         new_node->parent =node;
+         openList.emplace_back(new_node);
         }
       }
     }
   }
+  //doesnt' actually return anything... should have it make error or something
+  printf("ERROR NO END IN SIGHT");
+  return openList;
 }
 
 
@@ -174,44 +201,64 @@ int main(int argc, char **argv)
   ros::NodeHandle nr;
   ros::Publisher path_pub = nr.advertise<nav_msgs::Path>("Path", 50);
   ros::Publisher p_pub = nr.advertise<geometry_msgs::PoseStamped>("pose_path", 50);
-  //tf::TransformBroadcaster odom_broadcaster;
-  int x = 7;
-  int y = 4;
-  int  z = 9;
-  
+ 
 
-std::vector<a_node> test1;
+  int x = 7;
+  int y = 3;
+  int  z = 10;  
+float LO = -10.0;
+ float HI = 10.0;
+ srand (static_cast <unsigned> (time(0)));
+
+g_node r_g[ELEMENTS];
+g_node *rp;
+rp = r_g;
+
+ for (int i = 0; i<ELEMENTS; i++)
+ {
+  r_g[i].data= rand_vox();
+  r_g[i].id = i;
+ }
+g_explore(rp);
+printf("done \n");
+g_node s = r_g[rand() %ELEMENTS];
+g_node e = r_g[rand() %ELEMENTS];
+
+std::vector<g_node*> test1 =  astar_calc( s, e);
+
+
+
 printf("%d \n \n", x);
-test1 = astar_calc({1,1,1},{x,y,z});
+
 nav_msgs:: Path drone_path;  
 geometry_msgs::PoseStamped pose;
-pose.header.frame_id = "map";
+pose.header.frame_id = "world_enu";
 ros::Time current_time, last_time;
 current_time = ros::Time::now();
 pose.header.stamp = current_time;
-drone_path.header.frame_id = "map";
+drone_path.header.frame_id = "world_enu";
 ros::Rate r(3.0);
-//drone_path.poses.push_back(pose);
+
  
-a_node n;
+g_node *n;
 n = test1.back();
   test1.pop_back();
 
-  printf("Here is node x: %d  y: %d  z: %d  \n", n.here.x, n.here.y, n.here.z);
 
-  pose.pose.position.x = n.here.x;
-  pose.pose.position.y = n.here.y;
-  pose.pose.position.z = n.here.z;
+
+  pose.pose.position.x = n->data.x;
+  pose.pose.position.y = n->data.y;
+  pose.pose.position.z = n->data.z;
   drone_path.poses.push_back(pose);
 while (!test1.empty())
 {
   n = test1.back();
   test1.pop_back();
-  pose.pose.position.x = n.here.x;
-  pose.pose.position.y = n.here.y;
-  pose.pose.position.z = n.here.z;
+  pose.pose.position.x = n->data.x;
+  pose.pose.position.y = n->data.y;
+  pose.pose.position.z = n->data.z;
   drone_path.poses.push_back(pose);
-  printf("Here is node x: %d  y: %d  z: %d  f: %f  g: %f  h: %f \n", n.here.x, n.here.y, n.here.z, n.f, n.g, n.h);
+
 }
  while(nr.ok()){
 
@@ -220,10 +267,12 @@ while (!test1.empty())
     
     path_pub.publish(drone_path);
     p_pub.publish(pose);
- // printf("here is temp %f \n", vv[0].x);
-//vox n;
+
   }
-//  printf("here is h %f  %f  %f\n", vv[543].x, vv[543].y, vv[543].z);
+
+
+
+
   return 0;
 }
 

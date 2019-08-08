@@ -1,3 +1,4 @@
+/*
 #include <g_node.h>
 #include <stack> 
 #include <ros/ros.h>
@@ -7,6 +8,87 @@
 #include <algorithm>
 
 
+
+voxf rand_vox()
+{
+	voxf new_vox;
+//srand (static_cast <unsigned> (time(0)));
+	new_vox.x = x_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(x_max-x_min)));
+	new_vox.y = y_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(y_max-y_min)));
+	new_vox.z = z_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(z_max-z_min)));
+	return new_vox;
+
+}
+
+
+void printGraph(struct g_node* graph)
+{
+	int i;
+	for(int j = 0; j< 1; j++)
+	{
+		printf("start x = %f \n", (graph+j)->data.x);
+		for (i = 0; i < N; i++)
+		{
+
+			// print current vertex and all ts neighbors
+			struct g_node* ptr = (graph+j)->head[i];
+			//while (ptr != NULL)
+			{
+				printf("(%d -> %f)\t", i, ptr->data.x );//,ptr->data.y, ptr->data.z);
+				//ptr = ptr->next;
+			}
+			//printf("something \n");
+
+			printf("\n");
+		}
+}
+}
+
+
+
+double calc_d(voxf in, voxf dest)
+{
+  return (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))));
+}
+
+
+
+void g_explore(g_node* vin)
+{
+	voxf src;
+	for(int i = 0; i < ELEMENTS; i++) 
+	{	
+		voxf data = (vin+i)->data;
+		//point_hold small[N];
+		for(int j = 0; j<ELEMENTS; j++)
+		{
+			if( i !=j)
+			{
+				double dist = calc_d(data, (vin+j)->data);
+				for (int l = 0; l<N; l++)
+				{
+					if(dist < (vin+i)->head_dist[l])
+					{	
+						float big = dist;
+						int count = l;
+						for (int z = l; z<N;z++)
+						{
+							if(big < (vin+i)->head_dist[z])
+							{
+								count = z;								
+								big = (vin+i)->head_dist[z];
+							}
+						}
+						(vin+i)->head_dist[count] = dist;
+						(vin+i)->head[count]  = (vin+j);
+					    break;
+					}
+				}
+			}
+		}
+	}
+}
+/*
 	struct g* createGraph(struct edge edges[], int n)
 {
 	unsigned i;
@@ -67,12 +149,12 @@ void printGraph(struct g* graph)
 	}
 }
 }
-vox rand_vox()
+vox graph::rand_vox()
 {
 	vox new_vox;
 	new_vox.x = x_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(x_max-x_min)));
-	new_vox.y = 0;// y_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(y_max-y_min)));
-	new_vox.z = 0;//z_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(z_max-z_min)));
+	new_vox.y = y_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(y_max-y_min)));
+	new_vox.z = z_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(z_max-z_min)));
 	return new_vox;
 
 }
@@ -90,9 +172,7 @@ void find_graph( std::vector<g_node> nodes)
 			printf("temp: %d \n", *temp);
 		}
 	}
-	//for each node
-	//	calc_d as array
-	//set lowest n d as neighbors
+
 
 }
 
@@ -101,48 +181,7 @@ double calc_d(vox in, vox dest)
   return (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))));
 }
 
-/*g* g_explore(g* vin[]) //uses vectors
-{
-	unsigned i;
-	vox src;
-	for(std::vector<g>::iterator it = vin.begin(); it != vin.end(); ++it) 
-	{
-		vox data = it->data;
-		point_hold small[N];// = {FLT_MAX, NULL};
-		for(std::vector<g>::iterator temp = it+1; temp != vin.end(); ++temp)
-		{
-			double dist = calc_d(data, it->data);
-			for (int i = 0; i<N; i++)
-			{
-			if(dist < small[i].small)
-			{	
-				float big = small[i].small;
-				int count = 0;
 
-				for (int j = i; j<N;j++)
-				{
-					if(big >= small[j].small)
-					{
-						count = j;
-						big = small[j].small;
-					}
-				}
-				small[count].small = dist;
-			    break;
-			}
-		}
-	}
-		for (i = 0; i < N; i++)
-		{
-			//struct g* newNode = (struct g*)malloc(sizeof(struct g))
-			//newNode->data = small[i];
-		//	it->head[i] = small[i]->spot;
-		}	
-	}
-	struct g* graph = (struct g*)malloc(sizeof(struct g));
-	return graph;
-}
-*/
 
 void g_explore(g* vin)
 {
@@ -180,6 +219,7 @@ void g_explore(g* vin)
 	}
 }
 
+
 int main(int argc, char **argv)
 {
 	printf("Hello \n");
@@ -204,7 +244,7 @@ r = r_g;
 
  for (int i = 0; i<ELEMENTS; i++)
  {
- 	r_g[i].data= rand_vox();
+// 	r_g[i].data= rand_vox();
  	//printf("x = %f \n",r_g[i].data.x);
  	//printf("som = %f \n", r_g[i].head_dist[0]);
  	//printf("som = %f \n", r_g[i].head_dist[1]);
@@ -213,7 +253,7 @@ r = r_g;
  }
 
 			//{
-g_explore(r);
+//g_explore(r);
 ;
 //printf("g = %f",(r+1)->data.x);
 //printGraph(r);
@@ -229,3 +269,5 @@ printf("done \n");
 
 	return 0;
 }
+
+*/

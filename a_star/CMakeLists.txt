@@ -104,8 +104,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-#  INCLUDE_DIRS include
-#  LIBRARIES a_star
+   #LIBRARIES ${PROJECT_NAME}
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
@@ -118,11 +117,22 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+#add_library(pd_position_controller_simple src/pd_position_controller_simple.cpp)
+#add_dependencies(pd_position_controller_simple ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(pd_position_controller_simple ${catkin_EXPORTED_TARGETS})
+
+#add_library(g_node src/g_node.cpp)
+#add_dependencies(g_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(g_nodee ${catkin_EXPORTED_TARGETS})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 add_executable(a_star src/a_star.cpp)
 target_link_libraries(a_star ${catkin_LIBRARIES})
 
-add_executable(g_node src/g_node.cpp)
+#add_library(a_star src/g_node.cpp)
+#add_dependencies(g_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(g_node ${catkin_EXPORTED_TARGETS})
+
+#add_executable(g_node src/g_node.cpp)
 #target_link_libraries(g_node a_star ${catkin_LIBRARIES})
