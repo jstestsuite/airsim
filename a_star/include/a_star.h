@@ -5,14 +5,14 @@
 #include <move_base_msgs/MoveBaseAction.h>
 #include <geometry_msgs/PoseStamped.h>
 
-#define N 16
+#define N 18
 #define ELEMENTS 1000
-#define x_max 6
-#define x_min -6
-#define y_max 6
-#define y_min -6
-#define z_max 6
-#define z_min -6
+#define x_max 5
+#define x_min -2
+#define y_max 5
+#define y_min -2
+#define z_max 5
+#define z_min -2
 struct vox
 {
 	int x;
@@ -83,8 +83,8 @@ public:
 	static double calculateH(voxf in, voxf dest);
 	std::vector<g_node*> astar_calc( g_node start, g_node dest);
 	std::vector<g_node*> makePath(g_node start, g_node dest);
-
-		voxf rand_vox();
+	void add_g_node(g_node new_g, g_node* graph);
+	voxf rand_vox();
 	struct g_node* create_g(struct edge edges[], int n);	
 	void printGraph(struct g_node* graph);
 	void find_graph(std::vector<g_node> nodes);

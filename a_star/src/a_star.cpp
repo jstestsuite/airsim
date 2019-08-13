@@ -17,6 +17,38 @@ bool isValid(vox in)
   return true;
 }
 
+double calc_d(voxf in, voxf dest)
+{
+  return (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))));
+}
+
+void add_g_node(g_node &new_g, g_node* graph)
+{
+  for(int j = 0; j<ELEMENTS; j++)
+  {
+
+    double dist = calc_d(new_g.data, (graph+j)->data);
+    for (int l = 0; l<N; l++)
+    {
+      if(dist < new_g.head_dist[l])
+      { 
+        float big = dist;
+        int count = l;
+        for (int z = l; z<N;z++)
+        {
+          if(big < new_g.head_dist[z])
+          {
+            count = z;                
+            big = new_g.head_dist[z];
+          }
+        }
+        new_g.head_dist[count] = dist;
+        new_g.head[count]  = (graph+j);
+          break;
+      }
+    }
+  }
+}
 voxf rand_vox()
 {
   voxf new_vox;
@@ -53,24 +85,19 @@ void printGraph(struct g_node* graph)
 
 
 
-double calc_d(voxf in, voxf dest)
-{
-  return (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))));
-}
+
 
 
 
 void g_explore(g_node* vin)
 {
-  voxf src;
   for(int i = 0; i < ELEMENTS; i++) 
   { 
-    voxf data = (vin+i)->data;
     for(int j = 0; j<ELEMENTS; j++)
     {
       if( i !=j)
       {
-        double dist = calc_d(data, (vin+j)->data);
+        double dist = calc_d((vin+i)->data, (vin+j)->data);
         for (int l = 0; l<N; l++)
         {
           if(dist < (vin+i)->head_dist[l])
@@ -147,7 +174,7 @@ std::vector<g_node*> astar_calc( g_node &start, g_node &dest)
 {
   start.h = calculateH(start.data, dest.data);
 
-  bool closedList[ELEMENTS]= {false};
+  bool closedList[ELEMENTS+1]= {false};
   std::vector<g_node*> openList;
   openList.emplace_back(&start);
 
@@ -195,7 +222,7 @@ std::vector<g_node*> astar_calc( g_node &start, g_node &dest)
 
 int main(int argc, char **argv)
 {
-
+;
     ros::init(argc, argv, "odometry_publisher");
 
   ros::NodeHandle nr;
@@ -213,16 +240,24 @@ float LO = -10.0;
 g_node r_g[ELEMENTS];
 g_node *rp;
 rp = r_g;
-
+ 
  for (int i = 0; i<ELEMENTS; i++)
  {
   r_g[i].data= rand_vox();
   r_g[i].id = i;
  }
+
 g_explore(rp);
-printf("done \n");
-g_node s = r_g[rand() %ELEMENTS];
-g_node e = r_g[rand() %ELEMENTS];
+printf("Built graph \n");
+
+g_node s;
+s.id = ELEMENTS+1;
+s.data = {0,0,0}; 
+g_node e;
+e.data = {4,4,4};
+
+add_g_node(s,rp);
+add_g_node(e,rp);
 
 std::vector<g_node*> test1 =  astar_calc( s, e);
 
@@ -250,6 +285,8 @@ n = test1.back();
   pose.pose.position.y = n->data.y;
   pose.pose.position.z = n->data.z;
   drone_path.poses.push_back(pose);
+
+  printf("Starting to advertise path\n");
 while (!test1.empty())
 {
   n = test1.back();
@@ -260,7 +297,8 @@ while (!test1.empty())
   drone_path.poses.push_back(pose);
 
 }
- while(nr.ok()){
+ //while(nr.ok())
+  //{
 
    r.sleep();              
   current_time = ros::Time::now();
@@ -268,7 +306,7 @@ while (!test1.empty())
     path_pub.publish(drone_path);
     p_pub.publish(pose);
 
-  }
+ // }
 
 
 

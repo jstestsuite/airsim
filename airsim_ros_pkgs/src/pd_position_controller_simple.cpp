@@ -54,13 +54,14 @@ void PIDPositionController::initialize_ros()
 {
     vel_cmd_ = airsim_ros_pkgs::VelCmd();
     // ROS params
-    double update_control_every_n_sec;
-    nh_private_.getParam("update_control_every_n_sec", update_control_every_n_sec);
+    double update_control_every_n_sec = 0.2;
+    //nh_private_.getParam("update_control_every_n_sec", update_control_every_n_sec);
 
     // ROS publishers
     airsim_vel_cmd_world_frame_pub_ = nh_private_.advertise<airsim_ros_pkgs::VelCmd>("/airsim_node/drone_1/vel_cmd_world_frame", 1);
  
     // ROS subscribers
+    a_star_path = nh_.subscribe("/Path", 50, &PIDPositionController::a_star_path_cb, this);
     airsim_odom_sub_ = nh_.subscribe("/airsim_node/drone_1/odom_local_ned", 50, &PIDPositionController::airsim_odom_cb, this);
     home_geopoint_sub_ = nh_.subscribe("/airsim_node/origin_geo_point", 50, &PIDPositionController::home_geopoint_cb, this);
     // todo publish this under global nodehandle / "airsim node" and hide it from user
@@ -72,6 +73,52 @@ void PIDPositionController::initialize_ros()
     // ROS timers
     update_control_cmd_timer_ = nh_private_.createTimer(ros::Duration(update_control_every_n_sec), &PIDPositionController::update_control_cmd_timer_cb, this);
 }
+
+void PIDPositionController::a_star_path_cb(const nav_msgs::Path::ConstPtr& path_msg)
+{
+    if(!got_goal_once_)
+        got_goal_once_ = true;
+
+    if (has_goal_ && !reached_goal_)
+    {
+        // todo maintain array of position goals
+        ROS_ERROR_STREAM("[PIDPositionController] denying position goal request. I am still following the previous goal");
+      //  return false;
+    }
+
+    if (!has_goal_)
+    {
+        XYZYaw temp;
+        for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = path_msg->poses.begin(); it != path_msg->poses.end(); ++it)
+{
+  //  ROS_INFO_STREAM("[PIDPositionController] got goal: x=" << it->pose.position.x  );
+     temp.x = it->pose.position.x;
+     temp.y =  it->pose.position.y;
+     temp.z = -1*it->pose.position.z;
+     temp.yaw =  0;
+        target_position_path.emplace_back(temp);//-1*path_msg.poses[5].pose.position.x;
+       // target_position_path.y = 0;//-1*path_msg.poses[5].pose.position.y;
+        //target_position_path.z = 0;//-1*path_msg.poses[5].pose.position.z;
+       // target_position_path.yaw = 0;
+
+}
+        target_position_ = target_position_path.back();//-1*path_msg.poses[5].pose.position.x;
+       // target_position_.y = 0;//-1*path_msg.poses[5].pose.position.y;
+        //target_position_.z = 0;//-1*path_msg.poses[5].pose.position.z;
+        //target_position_.yaw = 0;
+        target_position_path.pop_back();
+        ROS_INFO_STREAM("[PIDPositionController] got goal: x=" << target_position_.x << " y=" << target_position_.y << " z=" << target_position_.z << " yaw=" << target_position_.yaw );
+
+        // todo error checks 
+        // todo fill response
+        has_goal_ = true;
+        reached_goal_ = false;
+        reset_errors(); // todo
+      //  return true;
+    }
+    
+}
+
 
 void PIDPositionController::airsim_odom_cb(const nav_msgs::Odometry& odom_msg)
 {
@@ -97,7 +144,17 @@ void PIDPositionController::check_reached_goal()
 
     // todo save this in degrees somewhere to avoid repeated conversion
     if (diff_xyz < params_.reached_thresh_xyz && diff_yaw < math_common::deg2rad(params_.reached_yaw_degrees))
+    {
+        if( target_position_path.empty()) 
         reached_goal_ = true; 
+    else
+    {
+
+        target_position_ = target_position_path.back();
+        ROS_INFO_STREAM("[PIDPositionController] got goal: x=" << target_position_.x << " y=" << target_position_.y << " z=" << target_position_.z << " yaw=" << target_position_.yaw );
+        target_position_path.pop_back();
+    }
+    }
 }
 
 bool PIDPositionController::local_position_goal_srv_cb(airsim_ros_pkgs::SetLocalPosition::Request& request, airsim_ros_pkgs::SetLocalPosition::Response& response)
@@ -286,7 +343,7 @@ void PIDPositionController::update_control_cmd_timer_cb(const ros::TimerEvent& e
     // only compute and send control commands for hovering / moving to pose, if we received a goal at least once in the past  
     if (got_goal_once_)
     {
-         
+       
         compute_control_cmd();
         enforce_dynamic_constraints();
         publish_control_cmd();

@@ -17,6 +17,7 @@ STRICT_MODE_ON
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <math.h>
 #include <airsim_ros_pkgs/VelCmd.h>
 #include <airsim_ros_pkgs/SetLocalPosition.h>
@@ -96,6 +97,7 @@ public:
     bool gps_goal_srv_override_cb(airsim_ros_pkgs::SetGPSPosition::Request& request, airsim_ros_pkgs::SetGPSPosition::Response& response);
 
     // ROS subscriber callbacks
+    void a_star_path_cb(const nav_msgs::Path::ConstPtr& path_msg);
     void airsim_odom_cb(const nav_msgs::Odometry& odom_msg);
     void home_geopoint_cb(const airsim_ros_pkgs::GPSYaw& gps_msg);
 
@@ -119,6 +121,7 @@ private:
     DynamicConstraints constraints_;
     PIDParams params_;
     XYZYaw target_position_;
+    std::vector<XYZYaw> target_position_path;
     XYZYaw curr_position_;
     XYZYaw prev_error_;
     XYZYaw curr_error_;
@@ -136,6 +139,7 @@ private:
 
     ros::Publisher airsim_vel_cmd_world_frame_pub_;
     ros::Subscriber airsim_odom_sub_;
+    ros::Subscriber a_star_path;
     ros::Subscriber home_geopoint_sub_;
     ros::ServiceServer local_position_goal_srvr_;
     ros::ServiceServer local_position_goal_override_srvr_;
