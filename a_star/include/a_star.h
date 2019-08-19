@@ -24,11 +24,7 @@ struct a_node
 {
 	vox here;
 	vox parent;
-
-
 	double f, g, h;
-
-
 };
 
 
@@ -62,17 +58,7 @@ struct g_node
 	{
 		for(int i = 0; i<N; i++)
 			 head[i] = NULL;
-
 	}
-};
-
-
-
-struct edge
-{
-	//g_node *src;
-	//g_node *dest;
-	voxf src;//, dest;
 };
 
 class a_star
@@ -84,13 +70,11 @@ public:
 	std::vector<g_node*> astar_calc( g_node start, g_node dest);
 	std::vector<g_node*> makePath(g_node start, g_node dest);
 	void add_g_node(g_node new_g, g_node* graph);
-	voxf rand_vox();
-	struct g_node* create_g(struct edge edges[], int n);	
+	voxf rand_vox();	
 	void printGraph(struct g_node* graph);
 	void find_graph(std::vector<g_node> nodes);
-	void g_explore(g_node*  vin);
- double calc_d(voxf in, voxf dest);
+	void graph_connect(g_node*  vin);
+    double calc_d(voxf in, voxf dest);
 private:
-
 
 };

@@ -97,15 +97,8 @@ void PIDPositionController::a_star_path_cb(const nav_msgs::Path::ConstPtr& path_
      temp.z = -1*it->pose.position.z;
      temp.yaw =  0;
         target_position_path.emplace_back(temp);//-1*path_msg.poses[5].pose.position.x;
-       // target_position_path.y = 0;//-1*path_msg.poses[5].pose.position.y;
-        //target_position_path.z = 0;//-1*path_msg.poses[5].pose.position.z;
-       // target_position_path.yaw = 0;
-
 }
         target_position_ = target_position_path.back();//-1*path_msg.poses[5].pose.position.x;
-       // target_position_.y = 0;//-1*path_msg.poses[5].pose.position.y;
-        //target_position_.z = 0;//-1*path_msg.poses[5].pose.position.z;
-        //target_position_.yaw = 0;
         target_position_path.pop_back();
         ROS_INFO_STREAM("[PIDPositionController] got goal: x=" << target_position_.x << " y=" << target_position_.y << " z=" << target_position_.z << " yaw=" << target_position_.yaw );
 

@@ -7,7 +7,7 @@
 #include <ctime>
 #include <algorithm>
 
-bool isValid(vox in)
+bool isValid(vox in) //checks iflocation is valid.  Just using 10*10*10 for now, will do object check later
 {
   int x = in.x;
   int y = in.y;
@@ -17,16 +17,15 @@ bool isValid(vox in)
   return true;
 }
 
-double calc_d(voxf in, voxf dest)
+double calc_d(voxf in, voxf dest) //calcs the distance between points
 {
   return (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))));
 }
 
-void add_g_node(g_node &new_g, g_node* graph)
+void add_g_node(g_node &new_g, g_node* graph)  //Adds nodes to the graph
 {
   for(int j = 0; j<ELEMENTS; j++)
   {
-
     double dist = calc_d(new_g.data, (graph+j)->data);
     for (int l = 0; l<N; l++)
     {
@@ -44,24 +43,23 @@ void add_g_node(g_node &new_g, g_node* graph)
         }
         new_g.head_dist[count] = dist;
         new_g.head[count]  = (graph+j);
-          break;
+        break;
       }
     }
   }
 }
-voxf rand_vox()
+
+voxf rand_vox() //creates random vox using x_min/x_max values
 {
   voxf new_vox;
-//srand (static_cast <unsigned> (time(0)));
   new_vox.x = x_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(x_max-x_min)));
   new_vox.y =  y_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(y_max-y_min)));
   new_vox.z = z_min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(z_max-z_min)));
   return new_vox;
-
 }
 
 
-void printGraph(struct g_node* graph)
+void printGraph(struct g_node* graph)  //prints graph
 {
   int i;
   for(int j = 0; j< 1; j++)
@@ -69,7 +67,6 @@ void printGraph(struct g_node* graph)
     printf("start x = %f \n", (graph+j)->data.x);
     for (i = 0; i < N; i++)
     {
-
       // print current vertex and all ts neighbors
       struct g_node* ptr = (graph+j)->head[i];
       //while (ptr != NULL)
@@ -77,19 +74,12 @@ void printGraph(struct g_node* graph)
         printf("(%d -> %f)\t", i, ptr->data.x );//,ptr->data.y, ptr->data.z);
         //ptr = ptr->next;
       }
-
       printf("\n");
     }
 }
 }
 
-
-
-
-
-
-
-void g_explore(g_node* vin)
+void graph_connect(g_node* vin) //builds graph by finding N closest neighbors
 {
   for(int i = 0; i < ELEMENTS; i++) 
   { 
@@ -114,7 +104,7 @@ void g_explore(g_node* vin)
             }
             (vin+i)->head_dist[count] = dist;
             (vin+i)->head[count]  = (vin+j);
-              break;
+            break;
           }
         }
       }
@@ -122,7 +112,7 @@ void g_explore(g_node* vin)
   }
 }
 
-bool isDestination(voxf in, voxf dest)
+bool isDestination(voxf in, voxf dest) //checks if destination
 {
   if (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))) <= 0.5)
   {
@@ -134,46 +124,36 @@ bool isDestination(voxf in, voxf dest)
   }
 }
 
-double calculateH(voxf in, voxf dest)
+double calculateH(voxf in, voxf dest) //calculate the H value for the a* algorithm
 {
   return (sqrt(abs((in.x-dest.x)*(in.x-dest.x))+abs((in.y-dest.y)*(in.y-dest.y))+abs((in.z-dest.z)*(in.z-dest.z))));
 }
 
-
-
-std::vector<g_node*> makePath(g_node &start, g_node &dest) 
+std::vector<g_node*> makePath(g_node &start, g_node &dest) //builds vector containing path
 {
-
     g_node *place;
     place = &dest;
-
     std::stack<g_node*> path;
     std::vector<g_node*> usablePath;
-
+    
     while (place->parent->id != start.id)
     {
         path.push(place->parent);
         place = place->parent;          
     }
-
     path.push(place->parent);
-
     while (!path.empty())
     {
         g_node *top = path.top();
         path.pop();
         usablePath.emplace_back(top);
     }
-
     return usablePath;
-
 }
 
-
-std::vector<g_node*> astar_calc( g_node &start, g_node &dest)
+std::vector<g_node*> astar_calc( g_node &start, g_node &dest) //runs the a* algorithm
 {
   start.h = calculateH(start.data, dest.data);
-
   bool closedList[ELEMENTS+1]= {false};
   std::vector<g_node*> openList;
   openList.emplace_back(&start);
@@ -183,7 +163,6 @@ std::vector<g_node*> astar_calc( g_node &start, g_node &dest)
     g_node *node = *openList.begin();
     openList.erase(openList.begin());
     closedList[node->id] = true;
-
     for (int n = 0; n <N; n++)
     {
       double gNew, hNew, fNew;
@@ -222,24 +201,15 @@ std::vector<g_node*> astar_calc( g_node &start, g_node &dest)
 
 int main(int argc, char **argv)
 {
-;
-    ros::init(argc, argv, "odometry_publisher");
-
+  ros::init(argc, argv, "odometry_publisher");
   ros::NodeHandle nr;
   ros::Publisher path_pub = nr.advertise<nav_msgs::Path>("Path", 50);
   ros::Publisher p_pub = nr.advertise<geometry_msgs::PoseStamped>("pose_path", 50);
- 
+  srand (static_cast <unsigned> (time(0)));
 
-  int x = 7;
-  int y = 3;
-  int  z = 10;  
-float LO = -10.0;
- float HI = 10.0;
- srand (static_cast <unsigned> (time(0)));
-
-g_node r_g[ELEMENTS];
-g_node *rp;
-rp = r_g;
+  g_node r_g[ELEMENTS];
+  g_node *rp;
+  rp = r_g;
  
  for (int i = 0; i<ELEMENTS; i++)
  {
@@ -247,7 +217,7 @@ rp = r_g;
   r_g[i].id = i;
  }
 
-g_explore(rp);
+graph_connect(rp);
 printf("Built graph \n");
 
 g_node s;
@@ -255,15 +225,9 @@ s.id = ELEMENTS+1;
 s.data = {0,0,0}; 
 g_node e;
 e.data = {4,4,4};
-
 add_g_node(s,rp);
 add_g_node(e,rp);
-
 std::vector<g_node*> test1 =  astar_calc( s, e);
-
-
-
-printf("%d \n \n", x);
 
 nav_msgs:: Path drone_path;  
 geometry_msgs::PoseStamped pose;
@@ -273,20 +237,10 @@ current_time = ros::Time::now();
 pose.header.stamp = current_time;
 drone_path.header.frame_id = "world_enu";
 ros::Rate r(3.0);
-
  
 g_node *n;
-n = test1.back();
-  test1.pop_back();
-
-
-
-  pose.pose.position.x = n->data.x;
-  pose.pose.position.y = n->data.y;
-  pose.pose.position.z = n->data.z;
-  drone_path.poses.push_back(pose);
-
-  printf("Starting to advertise path\n");
+printf("Starting to advertise path\n");
+test1.pop_back();
 while (!test1.empty())
 {
   n = test1.back();
@@ -295,21 +249,15 @@ while (!test1.empty())
   pose.pose.position.y = n->data.y;
   pose.pose.position.z = n->data.z;
   drone_path.poses.push_back(pose);
-
 }
  //while(nr.ok())
   //{
-
    r.sleep();              
   current_time = ros::Time::now();
     
     path_pub.publish(drone_path);
     p_pub.publish(pose);
-
  // }
-
-
-
 
   return 0;
 }
