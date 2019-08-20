@@ -6,6 +6,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <ctime>
 #include <algorithm>
+#include <iostream>
 
 bool isValid(vox in) //checks iflocation is valid.  Just using 10*10*10 for now, will do object check later
 {
@@ -148,6 +149,7 @@ std::vector<g_node*> makePath(g_node &start, g_node &dest) //builds vector conta
         path.pop();
         usablePath.emplace_back(top);
     }
+    //usablePath.emplace_back(&dest);
     return usablePath;
 }
 
@@ -171,7 +173,10 @@ std::vector<g_node*> astar_calc( g_node &start, g_node &dest) //runs the a* algo
       if (isDestination(new_node->data, dest.data))
       {
        printf("found end \n");
-       dest.parent =node;
+       dest.parent =new_node;
+          new_node->parent =node;
+         openList.emplace_back(new_node);
+         //openList.emplace_back(&dest);
        return makePath(start, dest);
       }
       if(closedList[new_node->id] == false)
@@ -227,9 +232,10 @@ g_node e;
 e.data = {4,4,4};
 add_g_node(s,rp);
 add_g_node(e,rp);
-std::vector<g_node*> test1 =  astar_calc( s, e);
+std::vector<g_node*> test1;// =  astar_calc( s, e);
 
 nav_msgs:: Path drone_path;  
+nav_msgs:: Path empty_path;
 geometry_msgs::PoseStamped pose;
 pose.header.frame_id = "world_enu";
 ros::Time current_time, last_time;
@@ -240,7 +246,7 @@ ros::Rate r(3.0);
  
 g_node *n;
 printf("Starting to advertise path\n");
-test1.pop_back();
+/*test1.pop_back();
 while (!test1.empty())
 {
   n = test1.back();
@@ -250,14 +256,34 @@ while (!test1.empty())
   pose.pose.position.z = n->data.z;
   drone_path.poses.push_back(pose);
 }
- //while(nr.ok())
-  //{
+*/
+float x;
+float y;
+float z;
+ while(nr.ok())
+  {
    r.sleep();              
   current_time = ros::Time::now();
+  printf("Enter the desired x y z location: ");
+  std::cin >> e.data.x;
+  std::cin >> e.data.y;
+  std::cin >> e.data.z;
+     
+     add_g_node(e,rp);
+      test1 =  astar_calc( s, e);
     
-    path_pub.publish(drone_path);
-    p_pub.publish(pose);
- // }
+    while (!test1.empty())
+{
+  n = test1.back();
+  test1.pop_back();
+  pose.pose.position.x = n->data.x;
+  pose.pose.position.y = n->data.y;
+  pose.pose.position.z = n->data.z;
+  drone_path.poses.push_back(pose);
+}
+path_pub.publish(drone_path);
+    drone_path = empty_path;
+  }
 
   return 0;
 }

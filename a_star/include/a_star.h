@@ -5,14 +5,14 @@
 #include <move_base_msgs/MoveBaseAction.h>
 #include <geometry_msgs/PoseStamped.h>
 
-#define N 18
-#define ELEMENTS 1000
-#define x_max 5
-#define x_min -2
-#define y_max 5
-#define y_min -2
-#define z_max 5
-#define z_min -2
+#define N 24
+#define ELEMENTS 10000
+#define x_max 10
+#define x_min -0
+#define y_max 10
+#define y_min -0
+#define z_max 10
+#define z_min -0
 struct vox
 {
 	int x;
