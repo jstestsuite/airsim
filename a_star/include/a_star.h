@@ -6,7 +6,7 @@
 #include <geometry_msgs/PoseStamped.h>
 
 #define N 24
-#define ELEMENTS 10000
+#define ELEMENTS 100
 #define x_max 10
 #define x_min -0
 #define y_max 10

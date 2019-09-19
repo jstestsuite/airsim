@@ -4,9 +4,14 @@
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <ctime>
 #include <algorithm>
 #include <iostream>
+#include <nav_msgs/Odometry.h>
+
+nav_msgs::Odometry curr_odom_;
+bool navm = false;
 
 bool isValid(vox in) //checks iflocation is valid.  Just using 10*10*10 for now, will do object check later
 {
@@ -203,14 +208,37 @@ std::vector<g_node*> astar_calc( g_node &start, g_node &dest) //runs the a* algo
   return openList;
 }
 
+void cam_img_cb(const sensor_msgs::PointCloud2::ConstPtr& depth_cam)
+{
+  ROS_INFO_STREAM(" got osition_.yaw ");
+  navm = true;
+
+}
+
+void odom_cb(const nav_msgs::Odometry& odom_msg)
+{
+    curr_odom_ = odom_msg;
+    navm = true;
+ROS_INFO_STREAM(" got odoimw ");
+}
+
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "odometry_publisher");
+  ros::MultiThreadedSpinner spinner(2);
+  ros::init(argc, argv, "a_star");
   ros::NodeHandle nr;
+
   ros::Publisher path_pub = nr.advertise<nav_msgs::Path>("Path", 50);
   ros::Publisher p_pub = nr.advertise<geometry_msgs::PoseStamped>("pose_path", 50);
   srand (static_cast <unsigned> (time(0)));
+
+  //used for map development
+  ros::Subscriber cam_img;
+  ros::Subscriber odom_sub;
+  //odom_sub = nr.subscribe("airsim_node/drone_1/odom_local_ned", 1000, odom_cb);
+  cam_img = nr.subscribe("airsim_node/drone_1/front_left_custom/DepthPlanner/registered/points", 100, cam_img_cb);
+  ROS_INFO_STREAM("Started \n ");
 
   g_node r_g[ELEMENTS];
   g_node *rp;
@@ -260,10 +288,21 @@ while (!test1.empty())
 float x;
 float y;
 float z;
+
+
+
+  
+
  while(nr.ok())
   {
    r.sleep();              
   current_time = ros::Time::now();
+ if(navm == true)
+  {
+    printf("ok... \n");
+  }
+  spinner.spin();
+
   printf("Enter the desired x y z location: ");
   std::cin >> e.data.x;
   std::cin >> e.data.y;
@@ -283,6 +322,7 @@ float z;
 }
 path_pub.publish(drone_path);
     drone_path = empty_path;
+    
   }
 
   return 0;

@@ -12,6 +12,7 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
+  //ros::Subscriber cam_img;
   printf("this is running \n");  
 
   map<tuple<int,int,int>,int> test;
@@ -24,9 +25,13 @@ int main(int argc, char **argv)
   return 0;
 }
 
-//data comes in as:
+
 
 /*
+add a timer like in airsim_ros_wrapper.cpp line 272 for grabbing the points.  Then work on adding them into the "map"
+            ros::TimerOptions timer_options(ros::Duration(update_airsim_img_response_every_n_sec), boost::bind(&AirsimROSWrapper::img_response_timer_cb, this, _1), &img_timer_cb_queue_);
+            airsim_img_response_timer_ = nh_private_.createTimer(timer_options);
+
 *32 bytes per point
 4 byte (float 32) bigendian so 0x3e346000 comes in as 0x0060343e
 y = ''
