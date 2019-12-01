@@ -4,9 +4,13 @@
 #include <sstream>
 #include <move_base_msgs/MoveBaseAction.h>
 #include <geometry_msgs/PoseStamped.h>
+#include "pcl_ros/point_cloud.h"
+#include "pcl/point_cloud.h"
+#include "pcl_conversions/pcl_conversions.h"
+
 
 #define N 24
-#define ELEMENTS 100
+#define ELEMENTS 10000
 #define x_max 10
 #define x_min -0
 #define y_max 10

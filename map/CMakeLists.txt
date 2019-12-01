@@ -8,6 +8,8 @@ project(map)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  pcl_conversions
+  pcl_ros
   roscpp
   std_msgs
 )
@@ -118,6 +120,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   /home/justin/GSL_home/GSL/include
+  
 )
 
 ## Declare a C++ library
@@ -205,5 +208,10 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(map src/global_map.cpp)
-target_link_libraries(map ${catkin_LIBRARIES})
+# add_executable(map src/global_map.cpp)
+#target_link_libraries(map ${catkin_LIBRARIES})
+
+add_library(global_map src/global_map.cpp)
+#add_dependencies(g_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(g_node ${catkin_EXPORTED_TARGETS})
+

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iostream>
 #include <nav_msgs/Odometry.h>
+#include "lidar_map.h"
 
 nav_msgs::Odometry curr_odom_;
 bool navm = false;
@@ -208,36 +209,23 @@ std::vector<g_node*> astar_calc( g_node &start, g_node &dest) //runs the a* algo
   return openList;
 }
 
-void cam_img_cb(const sensor_msgs::PointCloud2::ConstPtr& depth_cam)
-{
-  ROS_INFO_STREAM(" got osition_.yaw ");
-  navm = true;
-
-}
-
-void odom_cb(const nav_msgs::Odometry& odom_msg)
-{
-    curr_odom_ = odom_msg;
-    navm = true;
-ROS_INFO_STREAM(" got odoimw ");
-}
-
 
 int main(int argc, char **argv)
 {
-  ros::MultiThreadedSpinner spinner(2);
+
   ros::init(argc, argv, "a_star");
   ros::NodeHandle nr;
+  ros::NodeHandle nr_private("~");;
+  lidar_map test_map(nr, nr_private);
 
   ros::Publisher path_pub = nr.advertise<nav_msgs::Path>("Path", 50);
   ros::Publisher p_pub = nr.advertise<geometry_msgs::PoseStamped>("pose_path", 50);
   srand (static_cast <unsigned> (time(0)));
 
   //used for map development
-  ros::Subscriber cam_img;
-  ros::Subscriber odom_sub;
+  std::map<std::tuple<int,int,int>,int> test;
   //odom_sub = nr.subscribe("airsim_node/drone_1/odom_local_ned", 1000, odom_cb);
-  cam_img = nr.subscribe("airsim_node/drone_1/front_left_custom/DepthPlanner/registered/points", 100, cam_img_cb);
+
   ROS_INFO_STREAM("Started \n ");
 
   g_node r_g[ELEMENTS];
@@ -260,7 +248,7 @@ g_node e;
 e.data = {4,4,4};
 add_g_node(s,rp);
 add_g_node(e,rp);
-std::vector<g_node*> test1;// =  astar_calc( s, e);
+std::vector<g_node*> test1 =  astar_calc( s, e);
 
 nav_msgs:: Path drone_path;  
 nav_msgs:: Path empty_path;
@@ -274,7 +262,7 @@ ros::Rate r(3.0);
  
 g_node *n;
 printf("Starting to advertise path\n");
-/*test1.pop_back();
+test1.pop_back();
 while (!test1.empty())
 {
   n = test1.back();
@@ -284,7 +272,7 @@ while (!test1.empty())
   pose.pose.position.z = n->data.z;
   drone_path.poses.push_back(pose);
 }
-*/
+
 float x;
 float y;
 float z;
@@ -301,7 +289,7 @@ float z;
   {
     printf("ok... \n");
   }
-  spinner.spin();
+  ros::spin();
 
   printf("Enter the desired x y z location: ");
   std::cin >> e.data.x;

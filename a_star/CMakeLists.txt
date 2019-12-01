@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  pcl_conversions
+  pcl_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -104,7 +106,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-   #LIBRARIES ${PROJECT_NAME}
+   #LIBRARIES ${global_map}
+
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
@@ -115,6 +118,7 @@ catkin_package(
 include_directories(
  include
   ${catkin_INCLUDE_DIRS}
+
 )
 
 #add_library(pd_position_controller_simple src/pd_position_controller_simple.cpp)
@@ -125,14 +129,17 @@ include_directories(
 #add_dependencies(g_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #add_dependencies(g_nodee ${catkin_EXPORTED_TARGETS})
 
+add_library(lidar_map src/lidar_map.cpp)
+add_dependencies(lidar_map ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(lidar_map ${catkin_EXPORTED_TARGETS})
+
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 add_executable(a_star src/a_star.cpp)
-target_link_libraries(a_star ${catkin_LIBRARIES})
+target_link_libraries(a_star lidar_map ${catkin_LIBRARIES})
+#target_link_libraries(global_map ${catkin_LIBRARIES})
 
-#add_library(a_star src/g_node.cpp)
-#add_dependencies(g_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#add_dependencies(g_node ${catkin_EXPORTED_TARGETS})
+#add_library(lidar_map src/lidar_map.cpp)
+#add_dependencies(lidar_map ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-#add_executable(g_node src/g_node.cpp)
-#target_link_libraries(g_node a_star ${catkin_LIBRARIES})
+

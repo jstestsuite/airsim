@@ -90,14 +90,14 @@ void PIDPositionController::a_star_path_cb(const nav_msgs::Path::ConstPtr& path_
     {
         XYZYaw temp;
         for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = path_msg->poses.begin(); it != path_msg->poses.end(); ++it)
-{
-  //  ROS_INFO_STREAM("[PIDPositionController] got goal: x=" << it->pose.position.x  );
-     temp.x = it->pose.position.x;
-     temp.y =  it->pose.position.y;
-     temp.z = -1*it->pose.position.z;
-     temp.yaw =  0;
-        target_position_path.emplace_back(temp);//-1*path_msg.poses[5].pose.position.x;
-}
+        {
+          //  ROS_INFO_STREAM("[PIDPositionController] got goal: x=" << it->pose.position.x  );
+            temp.x = it->pose.position.x;
+            temp.y =  it->pose.position.y;
+            temp.z = -1*it->pose.position.z;
+            temp.yaw =  0;
+            target_position_path.emplace_back(temp);//-1*path_msg.poses[5].pose.position.x;
+        }
         target_position_ = target_position_path.back();//-1*path_msg.poses[5].pose.position.x;
         target_position_path.pop_back();
         ROS_INFO_STREAM("[PIDPositionController] got goal: x=" << target_position_.x << " y=" << target_position_.y << " z=" << target_position_.z << " yaw=" << target_position_.yaw );
